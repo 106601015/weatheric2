@@ -35,7 +35,7 @@ def get_120E_divergence(u, v):
         dx=dy*math.cos(y_to_lat(y)*(2*math.pi/360))
         x = lon_to_x(120)
         dudx = median_interpolation(u[y, x-1], u[y, x+1], dx)
-        print(u[y, x-1], u[y, x+1], dx, dy)
+        #print(u[y, x-1], u[y, x+1], dx, dy)
         # default try: median_interpolation
         try:
             dvdy = median_interpolation(v[y-1, x], v[y+1, x], dy)
@@ -46,23 +46,27 @@ def get_120E_divergence(u, v):
         if y == y_num-1:dvdy = front_interpolation(v[y-1, x], v[y, x], dy)
 
         divergence[y] = dudx + dvdy
-    print(divergence)
+    #print(divergence)
     return divergence
 
 # plot profile
 def plot_profile(w):
     print('plot init')
-    print(w_pressure_list)
+    #print(w_pressure_list)
+    # set up y, z grid
     y = np.arange(lat_lower, lat_upper+delta, delta)
     z = np.array(w_pressure_list)
     Y, Z = np.meshgrid(y, z)
 
-    # log y axit, set yticks
-    gap = np.max(w)/10
+    # set clabel gap, y_clabel_list and plot contour
+    gap = np.max(w)/8
+    gap = 0.0005
     y_clabel_list = gap * np.arange(int(np.min(w)/gap), int(np.max(w)/gap)+1)
-    print(y_clabel_list)
+    #print(y_clabel_list)
     cs = plt.contour(Y, Z, w, cmap='jet', levels=y_clabel_list)
-    plt.clabel(cs)
+
+    #set clabel, yscale=log , yticks, xlabel and xticks, ylim, grid, title, then savefig
+    plt.clabel(cs, fontsize='small', fmt='%1.4f')
     plt.yscale('log')
     plt.yticks(np.linspace(100, 1000, 10), np.linspace(100, 1000, 10).astype('int32'))
     xlabel = np.linspace(15, 60, 10)
@@ -70,7 +74,9 @@ def plot_profile(w):
     plt.ylim(w_pressure_list[0], w_pressure_list[5])
     gl = plt.grid(color='gray', alpha=0.3, linestyle='--')
     plt.title('Vertical velocity (120E)')
-    plt.show()
+    #plt.colorbar()
+    #plt.savefig('1.png')
+    plt.savefig(hw2_root_path+'1.png', dpi=800)
 
 if __name__ == "__main__":
     # Definition of basic parameters
@@ -83,14 +89,14 @@ if __name__ == "__main__":
     lon_upper, lon_lower, lat_upper, lat_lower = 180, 90, 60, 15
     delta = 1.875
 
-    # Load u, v data + definate parameters
+    # Load u, v data + definate variable
     for parameter in parameter_list:
         if parameter == 'H' or parameter == 'T':continue
         for pressure in pressure_list:
             plane_data_name = parameter + pressure
             plane_data = np.reshape(read_bindata_return_wanted(hw2_root_path, filename='output.bin', pressure=pressure, parameter=parameter), (y_num, x_num))
             names[plane_data_name] = plane_data
-            print(parameter+pressure, 'load ok')
+            #print(parameter+pressure, 'load ok')
 
     # init w0~5 as 0 array, and get every layers divergence
     w_pressure_list = [1010, 925, 775, 600, 400, 100]
@@ -120,6 +126,6 @@ if __name__ == "__main__":
             names['w{}'.format(str(i))] = np.copy(w)
 
     w = np.vstack([w0, w1, w2, w3, w4, w5])
-    print('w.shape', w.shape)
+    #print('w.shape', w.shape)
 
     plot_profile(w)
